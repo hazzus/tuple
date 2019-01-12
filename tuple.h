@@ -39,10 +39,27 @@ struct Tuple<First> {
 
     template<typename T>
     friend T const& get(Tuple<T> const& tuple);
+
+    template<std::size_t index, typename U, typename... V>
+    friend struct getter;
 private:
     First first;
 };
 
+// compile-time checker for type-getter
+template <typename T, typename U, typename... Rest>
+struct error_checker {
+    constexpr static bool value() {
+        return std::is_same<T, U>::value && error_checker<T, Rest...>::value();
+    }
+};
+
+template<typename T, typename U>
+struct error_checker<T, U> {
+    constexpr static bool value() {
+        return std::is_same<T, U>::value;
+    }
+};
 
 // getters non-const
 
@@ -53,6 +70,7 @@ T& get(Tuple<T> & tuple) {
 
 template <typename T, typename... TupleTypes>
 T& get(Tuple<T, TupleTypes...> & tuple) {
+    static_assert (!error_checker<T, TupleTypes...>::value(), "Ambigius call - same types");
     return tuple.first;
 }
 
@@ -60,6 +78,7 @@ template <typename T, typename... TupleTypes>
 T& get(Tuple<TupleTypes...> & tuple) {
     return get<T>(tuple.inside);
 }
+
 
 template<std::size_t index, typename First, typename... Rest>
 struct getter {
@@ -95,6 +114,7 @@ T const& get(Tuple<T> const& tuple) {
 
 template <typename T, typename... TupleTypes>
 T const& get(Tuple<T, TupleTypes...> const& tuple) {
+    static_assert (!error_checker<T, TupleTypes...>::value(), "Ambigius call - same types");
     return tuple.first;
 }
 
