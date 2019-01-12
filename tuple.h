@@ -3,12 +3,17 @@
 
 #include <typeinfo>
 #include <type_traits>
+#include <utility>
+#include <stdarg.h>
+
 namespace my {
 
 template<typename First, typename... Rest>
-struct Tuple {
+struct Tuple{
     Tuple() : first(), inside() {}
-    Tuple(First first, Rest... rest): first(first), inside(rest...) {}
+
+    template<typename F, typename... R>
+    Tuple(F&& first, R&&... rest): first(std::forward<F>(first)), inside(std::forward<R>(rest)...) {}
 
     template<std::size_t index, typename U, typename... V>
     friend struct getter;
@@ -32,7 +37,9 @@ private:
 template<typename First>
 struct Tuple<First> {
     Tuple() : first() {}
-    Tuple(First first): first(first) {}
+
+    template<typename F>
+    Tuple(F&& first): first(std::forward<First>(first)) {}
 
     template<typename T>
     friend T& get(Tuple<T> & tuple);
@@ -45,6 +52,7 @@ struct Tuple<First> {
 private:
     First first;
 };
+
 
 // compile-time checker for type-getter
 template <typename T, typename U, typename... Rest>
