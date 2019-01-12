@@ -50,7 +50,7 @@ private:
 template <typename T, typename U, typename... Rest>
 struct error_checker {
     constexpr static bool value() {
-        return std::is_same<T, U>::value && error_checker<T, Rest...>::value();
+        return std::is_same<T, U>::value || error_checker<T, Rest...>::value();
     }
 };
 

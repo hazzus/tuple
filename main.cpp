@@ -9,8 +9,8 @@ int main() {
     std::cout << my::get<int>(a) << std::endl;
     std::cout << my::get<char>(a) << std::endl;
     // my::get<long long>(a);  // -- compliation error
-    my::Tuple<int, int> no(1, 2);
-    my::get<int>(no);
+    my::Tuple<int, char, int> no(2, 'c', 3); //
+    std::cout << "AAAA " << my::get<int>(no) << std::endl;
     my::Tuple<int, char, long long, double> b(32, 'a', 400000, 4.32);
     my::get<double>(b) = 4.4444441;
     my::get<2>(b) = 42;
