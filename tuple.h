@@ -4,7 +4,6 @@
 #include <typeinfo>
 #include <type_traits>
 #include <utility>
-#include <stdarg.h>
 
 namespace my {
 
@@ -38,14 +37,19 @@ template<typename First>
 struct Tuple<First> {
     Tuple() : first() {}
 
-    template<typename F>
+    template<typename F, typename = typename std::enable_if<
+                 !std::is_same<
+                     F, Tuple<T>::value
+                 >
+
+                 >::type>
     Tuple(F&& first): first(std::forward<First>(first)) {}
 
-    template<typename T>
-    friend T& get(Tuple<T> & tuple);
+    template <typename T, typename... TupleTypes>
+    friend T const& get(Tuple<T, TupleTypes...> const& tuple);
 
-    template<typename T>
-    friend T const& get(Tuple<T> const& tuple);
+    template <typename T, typename... TupleTypes>
+    friend T& get(Tuple<T, TupleTypes...> & tuple);
 
     template<std::size_t index, typename U, typename... V>
     friend struct getter;
@@ -54,27 +58,25 @@ private:
 };
 
 
+template <typename T, typename... List>
+struct error_checker;
+
 // compile-time checker for type-getter
 template <typename T, typename U, typename... Rest>
-struct error_checker {
+struct error_checker<T, U, Rest...> {
     constexpr static bool value() {
         return std::is_same<T, U>::value || error_checker<T, Rest...>::value();
     }
 };
 
-template<typename T, typename U>
-struct error_checker<T, U> {
+template<typename T>
+struct error_checker<T> {
     constexpr static bool value() {
-        return std::is_same<T, U>::value;
+        return false;
     }
 };
 
 // getters non-const
-
-template<typename T>
-T& get(Tuple<T> & tuple) {
-    return tuple.first;
-}
 
 template <typename T, typename... TupleTypes>
 T& get(Tuple<T, TupleTypes...> & tuple) {
@@ -114,11 +116,6 @@ auto get(Tuple<TupleTypes...> & tuple) -> decltype (getter<index, TupleTypes...>
 }
 
 // getters const
-
-template<typename T>
-T const& get(Tuple<T> const& tuple) {
-    return tuple.first;
-}
 
 template <typename T, typename... TupleTypes>
 T const& get(Tuple<T, TupleTypes...> const& tuple) {
